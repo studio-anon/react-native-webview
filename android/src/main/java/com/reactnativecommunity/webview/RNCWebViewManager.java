@@ -1212,27 +1212,31 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
                                   boolean isUserGesture, Message resultMsg) {
       newWebView = new WebView(view.getContext());
       newWebView.getSettings().setJavaScriptEnabled(true);
-      newWebView.setWebViewClient(new WebViewClient(){
-   @Override
-public boolean shouldOverrideUrlLoading(WebView subview, String url) {
-    if (url.startsWith("intent://")) {
-        try {
-            Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
-            if (intent != null) {
+      newWebView.setWebViewClient(new WebViewClient() {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView subview, String url) {
+          if (url.startsWith("intent://")) {
+            try {
+              Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+              if (intent != null) {
                 String fallbackUrl = intent.getStringExtra("browser_fallback_url");
-                if(fallbackUrl != null && fallbackUrl.startsWith("https://")){
+                if (fallbackUrl != null && fallbackUrl.startsWith("https://")) {
                   view.loadUrl(fallbackUrl);
                 }
+              }
+            } catch (URISyntaxException e) {
             }
-        } catch (URISyntaxException e) {
+            ViewGroup rootView = getRootView();
+            if (newWebView != null) rootView.removeView(newWebView);
+            return true;
+          }else if (url.startWidth("http://")){
+            return false;
+          }else{
+            if(webView.canGoBack())
+              webView.goBack();
+          }
         }
-        ViewGroup rootView = getRootView();
-        if (newWebView != null) rootView.removeView(newWebView);
-        return true;
-    }
 
-    return false;
-}
         @TargetApi(Build.VERSION_CODES.N)
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
