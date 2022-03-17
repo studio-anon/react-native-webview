@@ -1233,8 +1233,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           }else if (url.startWidth("https://") || url.startWidth("http://")){
             return false;
           }else{
-            if(webView.canGoBack())
-              webView.goBack();
+            if(view.canGoBack())
+              view.goBack();
           }
         }
 
