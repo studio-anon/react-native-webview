@@ -1230,11 +1230,12 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             ViewGroup rootView = getRootView();
             if (newWebView != null) rootView.removeView(newWebView);
             return true;
-          }else if (url.startWidth("https://") || url.startWidth("http://")){
+          }else if (url.startsWith("https://") || url.startsWith("http://")){
             return false;
           }else{
             if(view.canGoBack())
               view.goBack();
+            return true;
           }
         }
 
