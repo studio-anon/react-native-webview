@@ -695,7 +695,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
   public void receiveCommand(WebView root, int commandId, @Nullable ReadableArray args) {
     switch (commandId) {
       case COMMAND_GO_BACK:
-        root.goBack();
+        if(root.canGoBack())
+          root.goBack();
         break;
       case COMMAND_GO_FORWARD:
         root.goForward();
