@@ -1216,6 +1216,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
       newWebView.setWebViewClient(new WebViewClient() {
         @Override
         public boolean shouldOverrideUrlLoading(WebView subview, String url) {
+          ViewGroup rootView = getRootView();
+           
           if (url.startsWith("intent://")) {
             try {
               Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
@@ -1227,15 +1229,15 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
               }
             } catch (URISyntaxException e) {
             }
-            ViewGroup rootView = getRootView();
             if (newWebView != null) rootView.removeView(newWebView);
             return true;
           }else if (url.startsWith("https://") || url.startsWith("http://")){
-            return false;
+            view.loadUrl(url);
+            if (newWebView != null) rootView.removeView(newWebView);
+            return true;
           }else{
             if(view.canGoBack()) {
               view.goBack();
-              ViewGroup rootView = getRootView();
               if (newWebView != null) rootView.removeView(newWebView);
               return true;
             }
