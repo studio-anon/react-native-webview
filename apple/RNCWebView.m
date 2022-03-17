@@ -1352,7 +1352,14 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 
 - (void)goBack
 {
-  [_webView goBack];
+      WKWebView *webview = (WKWebView*)[self viewWithTag:19299];
+      if(webview != nil){
+        [webview removeFromSuperview];
+        webview = nil;
+        [_webView reload];
+      }else{
+        [_webView goBack];
+      }
 }
 - (void)closeWindow
 {
