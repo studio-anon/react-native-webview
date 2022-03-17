@@ -1236,7 +1236,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
             if(view.canGoBack())
               view.goBack();
             if (newWebView != null) rootView.removeView(newWebView);
-            return false;
+            return true;
           }
         }
 
