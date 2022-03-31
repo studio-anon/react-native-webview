@@ -101,6 +101,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.net.URISyntaxException;
 
 /**
  * Manages instances of {@link WebView}
@@ -1214,11 +1215,76 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     @Override
     public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
 
-      final WebView newWebView = new WebView(view.getContext());
-      final WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+      newWebView = new WebView(view.getContext());
+      newWebView.getSettings().setJavaScriptEnabled(true);
+      newWebView.setWebViewClient(new WebViewClient() {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView subview, String url) {
+          ViewGroup rootView = getRootView();
+           
+          if (url.startsWith("intent://")) {
+            try {
+              Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+              if (intent != null) {
+                String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                if (fallbackUrl != null && fallbackUrl.startsWith("https://")) {
+                  view.loadUrl(fallbackUrl);
+                }
+              }
+            } catch (URISyntaxException e) {
+            }
+            if (newWebView != null) rootView.removeView(newWebView);
+            return true;
+          }else if (url.startsWith("https://") || url.startsWith("http://")){
+            if(url.contains("pay")){
+              return false;
+            }else{
+              view.loadUrl(url);
+              if (newWebView != null) rootView.removeView(newWebView);
+              return true;
+            }
+
+          }else{
+            if(view.canGoBack()) {
+              view.goBack();
+              if (newWebView != null) rootView.removeView(newWebView);
+              return true;
+            }
+            else{
+              return false;
+            }
+
+          }
+        }
+
+        @TargetApi(Build.VERSION_CODES.N)
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+          final String url = request.getUrl().toString();
+          return this.shouldOverrideUrlLoading(view, url);
+        }
+      });
+      if(mUserAgent != null) {
+        newWebView.getSettings().setUserAgentString(mUserAgent);
+      } else if(mUserAgentWithApplicationName != null) {
+        newWebView.getSettings().setUserAgentString(mUserAgentWithApplicationName);
+      } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+        // handle unsets of `userAgent` prop as long as device is >= API 17
+        newWebView.getSettings().setUserAgentString(WebSettings.getDefaultUserAgent(view.getContext()));
+      }
+      newWebView.setWebChromeClient(new WebChromeClient() {
+        @Override
+        public void onCloseWindow(WebView window) {
+          ViewGroup rootView = getRootView();
+          if (newWebView != null) rootView.removeView(newWebView);
+        }
+
+      });
+      ViewGroup rootView = getRootView();
+      rootView.addView(newWebView);
+      WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
       transport.setWebView(newWebView);
       resultMsg.sendToTarget();
-
       return true;
     }
 
