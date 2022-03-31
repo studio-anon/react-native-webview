@@ -82,7 +82,6 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 @property (nonatomic, copy) RCTDirectEventBlock onContentProcessDidTerminate;
 #if !TARGET_OS_OSX
 @property (nonatomic, copy) WKWebView *webView;
-@property (nonatomic, copy) WKWebView *nwebView;
 #else
 @property (nonatomic, copy) RNCWKWebView *webView;
 #endif // !TARGET_OS_OSX
@@ -214,17 +213,17 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
       }
         UIMenuController *menuController = [UIMenuController sharedMenuController];
         NSMutableArray *menuControllerItems = [NSMutableArray arrayWithCapacity:self.menuItems.count];
-
+        
         for(NSDictionary *menuItem in self.menuItems) {
             NSString *menuItemLabel = [RCTConvert NSString:menuItem[@"label"]];
             NSString *menuItemKey = [RCTConvert NSString:menuItem[@"key"]];
             NSString *sel = [NSString stringWithFormat:@"%@%@", CUSTOM_SELECTOR, menuItemKey];
             UIMenuItem *item = [[UIMenuItem alloc] initWithTitle: menuItemLabel
                                                           action: NSSelectorFromString(sel)];
-
+            
             [menuControllerItems addObject: item];
         }
-
+  
         menuController.menuItems = menuControllerItems;
         [menuController setMenuVisible:YES animated:YES];
     }
@@ -311,22 +310,9 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
   if (!navigationAction.targetFrame.isMainFrame) {
-    _nwebView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
-    [_nwebView setTag:(19299)];
-    _nwebView.scrollView.delegate = self;
-    _nwebView.customUserAgent = @"Mozilla/5.0 (iPhone; CPU iPhone OS 13_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.5 Mobile/15E148 Safari/604.1";
-    _nwebView.UIDelegate = self;
-    _nwebView.navigationDelegate = self;
-    [_nwebView loadRequest:navigationAction.request];
-    [self addSubview:_nwebView];
-
-    return  _nwebView;
+    [webView loadRequest:navigationAction.request];
   }
   return nil;
-}
-- (void)webViewDidClose:(WKWebView *)webView {
-  [webView removeFromSuperview];
-  _nwebView = nil;
 }
 
 - (WKWebViewConfiguration *)setUpWkWebViewConfig
@@ -698,37 +684,38 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
         [_webView loadHTMLString:html baseURL:baseURL];
         return;
     }
-    //Add cookie for subsequent resource requests sent by page itself, if cookie was set in headers on WebView
+    // Add cookie for subsequent resource requests sent by page itself, if cookie was set in headers on WebView
     NSString *headerCookie = [RCTConvert NSString:_source[@"headers"][@"cookie"]];
     if(headerCookie) {
       NSDictionary *headers = [NSDictionary dictionaryWithObjectsAndKeys:headerCookie,@"Set-Cookie",nil];
       NSURL *urlString = [NSURL URLWithString:_source[@"uri"]];
       NSArray *httpCookies = [NSHTTPCookie cookiesWithResponseHeaderFields:headers forURL:urlString];
-      for (NSHTTPCookie *httpCookie in httpCookies) {
-          [_webView.configuration.websiteDataStore.httpCookieStore setCookie:httpCookie completionHandler:nil];
-      }
+      [self writeCookiesToWebView:httpCookies completion:nil];
     }
 
     NSURLRequest *request = [self requestForSource:_source];
-    // Because of the way React works, as pages redirect, we actually end up
-    // passing the redirect urls back here, so we ignore them if trying to load
-    // the same url. We'll expose a call to 'reload' to allow a user to load
-    // the existing page.
-    if ([request.URL isEqual:_webView.URL]) {
-        return;
-    }
-    if (!request.URL) {
-        // Clear the webview
-        [_webView loadHTMLString:@"" baseURL:nil];
-        return;
-    }
-    if (request.URL.host) {
-        [_webView loadRequest:request];
-    }
-    else {
-        NSURL* readAccessUrl = _allowingReadAccessToURL ? [RCTConvert NSURL:_allowingReadAccessToURL] : request.URL;
-        [_webView loadFileURL:request.URL allowingReadAccessToURL:readAccessUrl];
-    }
+
+    [self syncCookiesToWebView:^{
+      // Because of the way React works, as pages redirect, we actually end up
+      // passing the redirect urls back here, so we ignore them if trying to load
+      // the same url. We'll expose a call to 'reload' to allow a user to load
+      // the existing page.
+      if ([request.URL isEqual:_webView.URL]) {
+          return;
+      }
+      if (!request.URL) {
+          // Clear the webview
+          [_webView loadHTMLString:@"" baseURL:nil];
+          return;
+      }
+      if (request.URL.host) {
+          [_webView loadRequest:request];
+      }
+      else {
+          NSURL* readAccessUrl = _allowingReadAccessToURL ? [RCTConvert NSURL:_allowingReadAccessToURL] : request.URL;
+          [_webView loadFileURL:request.URL allowingReadAccessToURL:readAccessUrl];
+      }
+    }];
 }
 
 #if !TARGET_OS_OSX
@@ -1181,6 +1168,7 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
   // Allow all navigation by default
   decisionHandler(WKNavigationActionPolicyAllow);
 }
+
 /**
  * Called when the web view’s content process is terminated.
  * @see https://developer.apple.com/documentation/webkit/wknavigationdelegate/1455639-webviewwebcontentprocessdidtermi?language=objc
@@ -1331,6 +1319,15 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 - (void)webView:(WKWebView *)webView
   didFinishNavigation:(WKNavigation *)navigation
 {
+  if(_sharedCookiesEnabled && @available(iOS 11.0, *)) {
+    // Write all cookies from WKWebView back to sharedHTTPCookieStorage
+    [webView.configuration.websiteDataStore.httpCookieStore getAllCookies:^(NSArray* cookies) {
+      for (NSHTTPCookie *cookie in cookies) {
+        [[NSHTTPCookieStorage sharedHTTPCookieStorage] setCookie:cookie];
+      }
+    }];
+  }
+
   if (_ignoreSilentHardwareSwitch) {
     [self forceIgnoreSilentHardwareSwitch:true];
   }
@@ -1352,26 +1349,9 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 
 - (void)goBack
 {
-      WKWebView *webview = (WKWebView*)[self viewWithTag:19299];
-      if(webview != nil){
-        [webview removeFromSuperview];
-        webview = nil;
-        [_webView reload];
-      }else{
-        [_webView goBack];
-      }
+  [_webView goBack];
 }
-- (void)closeWindow
-{
-    WKWebView *webview = (WKWebView*)[self viewWithTag:19299];
-    if(webview != nil){
-      [webview removeFromSuperview];
-      webview = nil;
-      [_webView reload];
-    }else{
-      [_webView goBack];
-    }
-}
+
 - (void)reload
 {
   /**
@@ -1493,6 +1473,33 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
   }
 }
 
+- (void)writeCookiesToWebView:(NSArray<NSHTTPCookie *>*)cookies completion:(void (^)(void))completion {
+  // The required cookie APIs only became available on iOS 11
+  if(_sharedCookiesEnabled && @available(iOS 11.0, *)) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      dispatch_group_t group = dispatch_group_create();
+      for (NSHTTPCookie *cookie in cookies) {
+        dispatch_group_enter(group);
+        [_webView.configuration.websiteDataStore.httpCookieStore setCookie:cookie completionHandler:^{
+          dispatch_group_leave(group);
+        }];
+      }
+      dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+        if (completion) {
+          completion();
+        }
+      });
+    });
+  } else if (completion) {
+    completion();
+  }
+}
+
+- (void)syncCookiesToWebView:(void (^)(void))completion {
+  NSArray<NSHTTPCookie *> *cookies = [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies];
+  [self writeCookiesToWebView:cookies completion:completion];
+}
+
 - (void)resetupScripts:(WKWebViewConfiguration *)wkWebViewConfig {
   [wkWebViewConfig.userContentController removeAllUserScripts];
   [wkWebViewConfig.userContentController removeScriptMessageHandlerForName:MessageHandlerName];
@@ -1537,9 +1544,7 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
       if(!_incognito && !_cacheEnabled) {
         wkWebViewConfig.websiteDataStore = [WKWebsiteDataStore nonPersistentDataStore];
       }
-      for (NSHTTPCookie *cookie in [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]) {
-        [wkWebViewConfig.websiteDataStore.httpCookieStore setCookie:cookie completionHandler:nil];
-      }
+      [self syncCookiesToWebView:nil];
     } else {
       NSMutableString *script = [NSMutableString string];
 
