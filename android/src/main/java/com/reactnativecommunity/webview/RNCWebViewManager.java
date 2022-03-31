@@ -1184,6 +1184,8 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     protected View mVideoView;
     protected WebChromeClient.CustomViewCallback mCustomViewCallback;
 
+    protected WebView newWebView;
+
     /*
      * - Permissions -
      * As native permissions are asynchronously handled by the PermissionListener, many fields have
