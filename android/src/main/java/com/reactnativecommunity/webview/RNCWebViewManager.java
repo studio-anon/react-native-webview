@@ -1260,14 +1260,19 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           return this.shouldOverrideUrlLoading(view, url);
         }
       });
-      if(mUserAgent != null) {
-        newWebView.getSettings().setUserAgentString(mUserAgent);
-      } else if(mUserAgentWithApplicationName != null) {
-        newWebView.getSettings().setUserAgentString(mUserAgentWithApplicationName);
-      } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-        // handle unsets of `userAgent` prop as long as device is >= API 17
-        newWebView.getSettings().setUserAgentString(WebSettings.getDefaultUserAgent(view.getContext()));
+
+      try {
+        final String userAgent = view.getSettings().getUserAgentString();
+        if(userAgent != null) {
+          newWebView.getSettings().setUserAgentString(userAgent);
+        }else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+          // handle unsets of `userAgent` prop as long as device is >= API 17
+          newWebView.getSettings().setUserAgentString(WebSettings.getDefaultUserAgent(view.getContext()));
+        }
+      } catch (Exception e) {
+        newWebView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.79 Mobile Safari/537.36");
       }
+     
       newWebView.setWebChromeClient(new WebChromeClient() {
         @Override
         public void onCloseWindow(WebView window) {
