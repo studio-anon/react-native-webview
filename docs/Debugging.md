@@ -93,9 +93,3 @@ It's possible to debug WebView contents in the Android emulator or on a device u
 When debugging on device you must enable USB debugging in your device settings:
 
 Settings -> System -> About Phone -> Developer options -> enable USB debugging
-
-## Translations
-
-This file is available at:
-
-- [Brazilian portuguese](Debugging.portuguese.md)

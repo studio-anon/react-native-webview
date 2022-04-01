@@ -84,7 +84,6 @@ This document lays out the current public properties and methods for the React N
 - [`basicAuthCredential`](Reference.md#basicAuthCredential)
 - [`enableApplePay`](Reference.md#enableApplePay)
 - [`forceDarkOn`](Reference.md#forceDarkOn)
-- [`useWebView2`](Reference.md#useWebView2)
 - [`minimumFontSize`](Reference.md#minimumFontSize)
 
 ## Methods Index
@@ -574,14 +573,11 @@ url
 
 ### `onContentProcessDidTerminate`[⬆](#props-index)<!-- Link generated with jump2header -->
 
-Function that is invoked when the `WebView` content process is terminated. 
+Function that is invoked when the `WebView` content process is terminated.
 
 | Type     | Required | Platform                |
 | -------- | -------- | ----------------------- |
 | function | No       | iOS and macOS WKWebView |
-
-iOS Web views use a separate process to render and manage web content. WebKit calls this method when the process for the specified web view terminates for any reason. 
-The reason is not necessarily a crash. For instance, since iOS WebViews are not included in the total RAM of the app, they can be terminated independently of the app to liberate memory for new apps the user is opening. It's not unexpected to have WebViews get terminated after a while in the background.
 
 Example:
 
@@ -1527,19 +1523,6 @@ An object that specifies the credentials of a user to be used for basic authenti
 | ------ | -------- |
 | object | No       |
 
-### `useWebView2`
-
-Use WinUI WebView2 control instead of WebView control as the native webview. The WebView2 control is a WinUI control that renders web content using the Microsoft Edge (Chromium) rendering engine. Option can be toggled at runtime and supports Fast Refresh.
-
-| Type    | Required | Platform |
-| ------- | -------- | -------- |
-| boolean | No       | Windows  |
-
-Example:
-
-```javascript
-<WebView useWebView2 />
-
 ### `minimumFontSize`
 
 Android enforces a minimum font size based on this value. A non-negative integer between 1 and 72. Any number outside the specified range will be pinned. Default value is 8. If you are using smaller font sizes and are having trouble fitting the whole window onto one screen, try setting this to a smaller value.
@@ -1550,9 +1533,7 @@ Android enforces a minimum font size based on this value. A non-negative integer
 
 Example:
 
-```javascript
-<WebView minimumFontSize={1} />
-```
+`<WebView minimumFontSize={1} />`
 
 ## Methods
 
@@ -1647,9 +1628,3 @@ Tells this WebView to clear its internal back/forward list. [developer.android.c
 ## Other Docs
 
 Also check out our [Getting Started Guide](Getting-Started.md) and [In-Depth Guide](Guide.md).
-
-## Translations
-
-This file is available at:
-
-- [Brazilian portuguese](Reference.portuguese.md)

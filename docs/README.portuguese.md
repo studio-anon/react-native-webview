@@ -105,4 +105,3 @@ MIT
 Esse readme está disponível em:
 
 - [Inglês](../README.md)
-- [Francês](README.french.md)

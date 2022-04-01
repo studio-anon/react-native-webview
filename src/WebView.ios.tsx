@@ -2,6 +2,7 @@ import React from 'react';
 import {
   UIManager as NotTypedUIManager,
   View,
+  requireNativeComponent,
   NativeModules,
   Image,
   findNodeHandle,
@@ -9,7 +10,6 @@ import {
 } from 'react-native';
 import invariant from 'invariant';
 
-import RNCWebView from "./WebViewNativeComponent.ios";
 import {
   defaultOriginWhitelist,
   createOnShouldStartLoadWithRequest,
@@ -49,6 +49,10 @@ const processDecelerationRate = (
 };
 
 const RNCWebViewManager = NativeModules.RNCWebViewManager as ViewManager;
+
+const RNCWebView: typeof NativeWebViewIOS = requireNativeComponent(
+  'RNCWebView',
+);
 
 class WebView extends React.Component<IOSWebViewProps, State> {
   static defaultProps = {
@@ -208,7 +212,7 @@ class WebView extends React.Component<IOSWebViewProps, State> {
     } else {
       console.warn('Encountered an error loading page', event.nativeEvent);
     }
-
+    
     if (onLoadEnd) {
       onLoadEnd(event);
     }

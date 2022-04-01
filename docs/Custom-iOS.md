@@ -229,8 +229,3 @@ export default class CustomWebView extends Component {
   }
 }
 ```
-## Translations
-
-This file is available at:
-
-- [Brazilian portuguese](Custom-iOS.portuguese.md)
