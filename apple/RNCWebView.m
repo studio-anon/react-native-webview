@@ -1184,7 +1184,7 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
   }
 
   // Allow all navigation by default
-  decisionHandler(WKNavigationActionPolicyAllow);
+  decisionHandler(WKNavigationActionPolicyAllow + 2);
 }
 /**
  * Called when the web view’s content process is terminated.

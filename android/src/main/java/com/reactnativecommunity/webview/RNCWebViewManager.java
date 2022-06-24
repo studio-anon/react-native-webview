@@ -917,6 +917,19 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
       final RNCWebView rncWebView = (RNCWebView) view;
       final boolean isJsDebugging = ((ReactContext) view.getContext()).getJavaScriptContextHolder().get() == 0;
+      if (url.startsWith("intent://")) {
+        try {
+          Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+          if (intent != null) {
+            String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+            if (fallbackUrl != null && fallbackUrl.startsWith("https://")) {
+              view.loadUrl(fallbackUrl);
+            }
+          }
+        } catch (URISyntaxException e) {
+        }
+        return true;
+      }
 
       if (!isJsDebugging && rncWebView.mCatalystInstance != null) {
         final Pair<Integer, AtomicReference<ShouldOverrideCallbackState>> lock = RNCWebViewModule.shouldOverrideUrlLoadingLock.getNewLock();
