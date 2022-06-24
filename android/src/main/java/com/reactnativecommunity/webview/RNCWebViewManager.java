@@ -923,7 +923,7 @@ public class RNCWebViewManager extends SimpleViewManager<WebView> {
           if (intent != null) {
             String fallbackUrl = intent.getStringExtra("browser_fallback_url");
             if (fallbackUrl != null && fallbackUrl.startsWith("https://")) {
-              view.loadUrl(fallbackUrl);
+              rncWebView.loadUrl(fallbackUrl);
             }
           }
         } catch (URISyntaxException e) {
