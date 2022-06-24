@@ -311,21 +311,16 @@ NSString *const CUSTOM_SELECTOR = @"_CUSTOM_SELECTOR_";
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
   if (!navigationAction.targetFrame.isMainFrame) {
-    NSURLRequest *request = navigationAction.request;
-    NSString *url (request.URL).absoluteString
-    if([url hasPrefix:@"https://"]) {
-      _nwebView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
-      [_nwebView setTag:(19299)];
-      _nwebView.scrollView.delegate = self;
-      _nwebView.customUserAgent = @"Mozilla/5.0 (iPhone; CPU iPhone OS 15_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1";
-      _nwebView.UIDelegate = self;
-      _nwebView.navigationDelegate = self;
-      [_nwebView loadRequest:navigationAction.request];
-      [self addSubview:_nwebView];
+    _nwebView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
+    [_nwebView setTag:(19299)];
+    _nwebView.scrollView.delegate = self;
+    _nwebView.customUserAgent = @"Mozilla/5.0 (iPhone; CPU iPhone OS 13_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.5 Mobile/15E148 Safari/604.1";
+    _nwebView.UIDelegate = self;
+    _nwebView.navigationDelegate = self;
+    [_nwebView loadRequest:navigationAction.request];
+    [self addSubview:_nwebView];
 
-      return  _nwebView;
-    }
-   
+    return  _nwebView;
   }
   return nil;
 }
